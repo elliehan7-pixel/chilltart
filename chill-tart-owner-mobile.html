@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>焱品 Chill Tart — Owner (Mobile)</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --orange:#FF7A1A; --orange-soft:#FF9D52; --orange-deep:#E8650A; --peach:#FFE9D6;
+    --peach2:#FFF4EC; --ink:#2D2018; --soft:#8A7B6E; --line:#F0E5D8; --white:#fff; --mint:#34B981;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Satoshi','Noto Sans SC',sans-serif;background:#FFE3CC;color:var(--ink);display:flex;justify-content:center;padding:40px 24px 60px;min-height:100vh}
+  h1,h2,h3{font-family:'Clash Display','Noto Sans SC',sans-serif}
+  .label{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--peach);padding:8px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99}
+  .phone{width:390px;height:844px;background:var(--peach2);border-radius:46px;overflow:hidden;box-shadow:0 40px 80px rgba(255,122,26,.28);position:relative;border:11px solid #2D2018;display:flex;flex-direction:column}
+
+  /* header */
+  .top{background:#fff;padding:20px 20px 14px;border-bottom:1px solid var(--line);flex-shrink:0}
+  .top .r1{display:flex;align-items:center;gap:10px}
+  .top .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--orange),var(--orange-soft));display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px;font-family:'Noto Sans SC'}
+  .top b{font-size:16px;font-weight:700;display:block;line-height:1}
+  .top small{font-size:11px;color:var(--soft);font-weight:600}
+  .top .date{margin-left:auto;text-align:right;font-size:11px;color:var(--soft)}
+
+  .scroll{flex:1;overflow-y:auto;scrollbar-width:none}.scroll::-webkit-scrollbar{display:none}
+  .page{display:none;padding:16px 16px 24px}.page.on{display:block}
+
+  /* glance stats */
+  .glance{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .gstat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px}
+  .gstat small{font-size:11px;color:var(--soft);font-weight:600}
+  .gstat b{font-family:'Clash Display';font-size:24px;font-weight:700;display:block;margin-top:3px}
+  .gstat.accent{background:var(--orange);color:#fff;border-color:var(--orange)}
+  .gstat.accent small{color:#fff;opacity:.9}
+
+  .sec-title{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 10px;text-transform:uppercase;letter-spacing:.5px}
+  .empty{text-align:center;color:var(--soft);font-size:13px;padding:30px 10px}
+  .empty .ico{font-size:40px;margin-bottom:8px}
+
+  /* order card */
+  .ocard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+  .ocard .oh{display:flex;justify-content:space-between;align-items:flex-start}
+  .ocard .oid{font-weight:700;font-size:15px}
+  .ocard .who{font-size:12px;color:var(--soft);margin-top:1px}
+  .ocard .amt{font-weight:700;color:var(--orange);font-size:15px}
+  .ocard .items{font-size:12.5px;color:var(--ink);margin-top:9px;line-height:1.5;background:var(--peach2);border-radius:10px;padding:9px 11px}
+  .ocard .fruit{color:var(--orange-deep);font-size:11.5px}
+  .ocard .note{color:var(--orange-deep);font-style:italic;font-size:11.5px}
+  .ocard .meta{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;align-items:center}
+  .badge{padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;white-space:nowrap}
+  .b-new{background:#FFEAD6;color:#E8650A}.b-prep{background:#E1ECFF;color:#3567C9}
+  .b-ready{background:#E6E2FA;color:#6B4FBB}.b-done{background:#D7F5E4;color:#1C9B5C}
+  .b-cancel{background:#EEE;color:#999;text-decoration:line-through}
+  .b-paid{background:#D7F5E4;color:#1C9B5C}.b-unpaid{background:#FFE0DC;color:#D6422F}
+  .b-pickup{background:#FFF1DA;color:#B5781D}.b-deliv{background:#E1F2FF;color:#2C7BB3}
+  .ocard .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .abtn{flex:1;padding:11px;border-radius:11px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .abtn.pay{background:var(--mint);color:#fff}
+  .abtn.go{background:var(--orange);color:#fff}
+  .abtn.wa{background:#25D366;color:#fff}
+  .abtn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink);flex:0 0 auto;padding:11px 14px}
+
+  /* filter chips */
+  .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:6px;padding-bottom:2px}.chips::-webkit-scrollbar{display:none}
+  .chip{white-space:nowrap;padding:8px 14px;border-radius:11px;background:#fff;border:1.5px solid var(--line);font-size:12.5px;font-weight:600;cursor:pointer;color:var(--soft)}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* production */
+  .pcard{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px 15px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+  .pcard .pn{flex:1}.pcard .pn b{font-size:15px}.pcard .pn small{font-size:11px;color:var(--soft);display:block}
+  .pcard .pc{font-family:'Clash Display';font-size:28px;font-weight:700;color:var(--orange-deep)}
+
+  /* list rows */
+  .lrow{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .lrow.tap{cursor:pointer}
+  .lrow .ln b{font-size:14px}.lrow .ln small{font-size:11.5px;color:var(--soft);display:block;margin-top:1px}
+  .lrow .rt{text-align:right;font-size:12px}
+
+  /* more menu tiles */
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+  .tile{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;cursor:pointer;text-align:center}
+  .tile .ti{font-size:26px}
+  .tile b{display:block;font-size:13.5px;margin-top:6px}
+  .tile small{font-size:11px;color:var(--soft)}
+
+  /* catalogue */
+  .cat-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px;display:flex;gap:12px}
+  .cat-emoji{font-size:30px;width:48px;height:48px;border-radius:12px;background:var(--peach2);display:grid;place-items:center;flex-shrink:0}
+  .cat-info{flex:1;min-width:0}
+  .cat-name{font-weight:700;font-size:14.5px}
+  .cat-desc{font-size:11.5px;color:var(--soft);margin-top:2px}
+  .cat-sizes{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+  .cat-size{font-size:11.5px;background:var(--peach2);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  .cat-size b{color:var(--orange-deep)}
+  .cat-fruit{font-size:11px;color:var(--orange-deep);margin-top:6px}
+  .fruit-pill{font-size:12px;background:#fff;border:1.5px solid var(--line);border-radius:100px;padding:6px 12px;font-weight:600;display:inline-block;margin:0 6px 6px 0}
+
+  /* bottom nav */
+  .tabbar{flex-shrink:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:8px 6px 18px}
+  .tabbar a{flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--soft);cursor:pointer;padding:5px 0;position:relative}
+  .tabbar a .ic{display:block;font-size:20px;margin-bottom:2px;filter:grayscale(1) opacity(.6)}
+  .tabbar a.on{color:var(--orange-deep)}
+  .tabbar a.on .ic{filter:none}
+  .tabbar a .dot{position:absolute;top:2px;right:50%;margin-right:-16px;background:var(--orange);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:grid;place-items:center;padding:0 3px}
+
+  /* sheet (detail / invoice) */
+  .sheet-bg{position:absolute;inset:0;background:rgba(45,32,24,.5);display:none;align-items:flex-end;z-index:60}
+  .sheet-bg.on{display:flex}
+  .sheet{background:#fff;width:100%;max-height:90%;border-radius:24px 24px 0 0;overflow-y:auto;scrollbar-width:none}
+  .sheet::-webkit-scrollbar{display:none}
+  .sheet-h{position:sticky;top:0;background:#fff;padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .sheet-h h3{font-size:17px;font-weight:700}
+  .sheet-h .x{background:none;border:none;font-size:22px;cursor:pointer;color:var(--soft)}
+  .sheet-b{padding:16px 18px}
+  .srow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;gap:14px}
+  .srow:last-child{border:none}.srow span{color:var(--soft)}.srow b{text-align:right}
+  .srow.tap{cursor:pointer}
+  .seg{display:flex;gap:6px;margin-top:6px}
+  .seg button{flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--line);background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--soft)}
+  .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sheet-f{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:#fff}
+  .sheet-f .abtn{min-width:0}
+
+  /* invoice editor */
+  .inv-co{display:flex;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:2px solid var(--ink);margin-bottom:12px}
+  .inv-co b{font-size:14px;font-family:'Clash Display'}.inv-co .muted{font-size:10.5px;color:var(--soft);line-height:1.5}
+  .inv-billto{background:var(--peach2);border-radius:11px;padding:10px 12px;margin-bottom:12px;font-size:12.5px}
+  .inv-billto b{display:block;font-size:13.5px;margin:2px 0}.inv-billto .muted{font-size:11.5px;color:var(--soft)}
+  .inv-line{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .inv-in{border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:12.5px;font-family:inherit;color:var(--ink);width:100%}
+  .inv-in:focus{outline:none;border-color:var(--orange)}
+  .inv-del{background:none;border:none;color:#D6422F;font-size:17px;cursor:pointer;flex-shrink:0}
+  .inv-tot-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px}
+  .inv-tot-row span{color:var(--soft)}
+  .inv-tot-row.grand{font-size:16px;font-weight:700;border-top:1px solid var(--line);margin-top:5px;padding-top:9px}
+
+  .toast{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;white-space:nowrap;z-index:80}
+  .muted{color:var(--soft)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN GATE -->
+<div id="login-gate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#FF7A1A,#FF9D52);display:flex;align-items:center;justify-content:center;padding:24px;font-family:'Satoshi','Noto Sans SC',sans-serif">
+  <div style="background:#fff;border-radius:24px;padding:36px 28px;width:330px;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,.25);text-align:center">
+    <div style="width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#FF7A1A,#FF9D52);display:grid;place-items:center;color:#fff;font-weight:900;font-size:26px;font-family:'Noto Sans SC';margin:0 auto 16px">焱</div>
+    <h2 style="font-family:'Clash Display','Noto Sans SC';font-size:20px;font-weight:700;color:#2D2018">焱品 Chill Tart</h2>
+    <p style="color:#8A7B6E;font-size:12.5px;margin:5px 0 22px">Owner Mobile · 请输入密码登录</p>
+    <input id="login-pw" type="password" placeholder="Password 密码" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')tryLogin()"
+      style="width:100%;padding:13px 15px;border:1.5px solid #F0E5D8;border-radius:12px;font-size:15px;font-family:inherit;text-align:center;outline:none">
+    <div id="login-err" style="color:#D6422F;font-size:12.5px;font-weight:600;height:16px;margin:8px 0 0"></div>
+    <button onclick="tryLogin()" style="width:100%;margin-top:12px;padding:13px;border:none;border-radius:12px;background:#FF7A1A;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">登录 Log in →</button>
+  </div>
+</div>
+<div class="label">焱品 Chill Tart · Owner Mobile Companion</div>
+
+<div class="phone">
+  <div class="top">
+    <div class="r1">
+      <div class="logo">焱</div>
+      <div><b id="top-title">Orders 订单</b><small>焱品 Chill Tart</small></div>
+      <div class="date" id="top-date">—</div>
+    </div>
+  </div>
+
+  <div class="scroll" id="scroll">
+    <!-- ORDERS -->
+    <div class="page on" id="p-orders">
+      <div class="glance" id="orders-glance"></div>
+      <div class="chips" id="chips">
+        <div class="chip on" data-f="all">All</div>
+        <div class="chip" data-f="new">New</div>
+        <div class="chip" data-f="preparing">Preparing</div>
+        <div class="chip" data-f="ready">Ready</div>
+        <div class="chip" data-f="done">Done</div>
+      </div>
+      <div id="orders-list"></div>
+    </div>
+
+    <!-- PRODUCTION -->
+    <div class="page" id="p-production">
+      <div class="sec-title">Today · <span id="prod-date" style="color:var(--orange-deep)"></span></div>
+      <div id="prod-today"></div>
+      <div class="sec-title">Tomorrow</div>
+      <div id="prod-tomorrow"></div>
+    </div>
+
+    <!-- DELIVERY -->
+    <div class="page" id="p-delivery">
+      <div class="sec-title">Upcoming schedule</div>
+      <div id="delivery-list"></div>
+    </div>
+
+    <!-- MORE -->
+    <div class="page" id="p-more">
+      <div class="glance" id="more-glance"></div>
+      <div class="tiles">
+        <div class="tile" onclick="showMore('invoices')"><div class="ti">🧾</div><b>Invoices</b><small>账单 · PDF · share</small></div>
+        <div class="tile" onclick="showMore('catalogue')"><div class="ti">🧁</div><b>Catalogue</b><small>产品列表</small></div>
+        <div class="tile" onclick="showMore('customers')"><div class="ti">👥</div><b>Customers</b><small>顾客</small></div>
+        <div class="tile" onclick="showMore('sales')"><div class="ti">📈</div><b>Sales</b><small>营业额</small></div>
+      </div>
+      <div id="more-content"></div>
+      <button onclick="logout()" style="width:100%;margin-top:18px;padding:13px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--soft);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🚪 登出 Log out</button>
+      <div style="text-align:center;color:var(--soft);font-size:11px;margin-top:12px">焱品 Chill Tart · Mount Austin</div>
+    </div>
+  </div>
+
+  <div class="tabbar" id="tabbar">
+    <a class="on" data-tab="orders"><span class="ic">📦</span>Orders<span class="dot" id="dot-new">0</span></a>
+    <a data-tab="production"><span class="ic">👩‍🍳</span>Bakes</a>
+    <a data-tab="delivery"><span class="ic">🚚</span>Delivery</a>
+    <a data-tab="more"><span class="ic">📊</span>More</a>
+  </div>
+
+  <!-- detail / invoice sheet -->
+  <div class="sheet-bg" id="sheet-bg" onclick="if(event.target===this)closeSheet()">
+    <div class="sheet" id="sheet"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ====== CONFIG (same keys as order page & dashboard) ====== */
+const SUPABASE_URL  = 'https://qlnnoxevicdnlzehrixr.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsbm5veGV2aWNkbmx6ZWhyaXhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NDkwNDQsImV4cCI6MjA5NzAyNTA0NH0.wu6NmZAc0-DP_dISnFjiibBedzLae5guoq9YgoSLJ_E';
+let sb=null;
+try { if(window.supabase && !SUPABASE_URL.includes('YOUR-PROJECT')) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON); } catch(e){ console.warn('Supabase not configured',e); }
+
+const COMPANY = { name:'CHILL TART HOUSE', cnName:'焱品 Chill Tart', regId:'202603042003',
+  phone:'+60 18-222 5764', bank:'OCBC Bank · 716-124227-5', ig:'@chill.chill.tart', area:'Mount Austin, Johor Bahru' };
+
+const CATALOGUE = [
+  { key:'mini', zh:'Mini Tart 迷你挞', en:'Mini Tart · 16 pcs', emoji:'🧁',
+    desc:'综合水果迷你挞 · assorted mini fruit tarts', fruitNote:'每盒选 1–2 种水果 · 1–2 fruits per box',
+    sizes:[ {zh:'16 粒一盒', en:'Box of 16', price:52} ] },
+  { key:'custard', zh:'Custard 水果挞', en:'Custard Fruit Tart', emoji:'🍓',
+    desc:'酥脆挞皮 + 卡士达 + 水果 · custard + fresh fruit', fruitNote:'3寸每挞选 1–2；5寸选 1 · 3" pick 1–2, 5" pick 1',
+    sizes:[ {zh:'3寸（2粒）', en:'3 inch · 2 pcs', price:28.80}, {zh:'5寸（1粒）', en:'5 inch · 1 pc', price:38.80} ] },
+];
+const FRUITS_LIST = ['芒果 Mango','草莓 Strawberry','蓝莓 Blueberry','奇异果 Kiwi','葡萄 Grape','龙眼 Longan'];
+const PRODUCTS = Object.fromEntries(CATALOGUE.map(p=>[p.key,{zh:p.zh,en:p.en}]));
+
+const STATUS={new:{zh:'新',en:'New',cls:'b-new'},preparing:{zh:'制作中',en:'Preparing',cls:'b-prep'},ready:{zh:'待交付',en:'Ready',cls:'b-ready'},done:{zh:'已交付',en:'Done',cls:'b-done'},cancelled:{zh:'已取消',en:'Cancelled',cls:'b-cancel'}};
+const NEXT={new:'preparing',preparing:'ready',ready:'done'};
+function todayStr(o=0){const d=new Date();d.setDate(d.getDate()+o);return d.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});}
+
+let ORDERS=[];
+
+const $=id=>document.getElementById(id);
+const money=n=>'RM '+(+n).toFixed(2);
+const orderTotal=o=>o.items.reduce((s,i)=>s+i.price*i.qty,0);
+const isActive=o=>o.status!=='cancelled';
+const find=id=>ORDERS.find(o=>o.id===id);
+const pname=key=>PRODUCTS[key]?PRODUCTS[key].zh:key;
+const penname=key=>PRODUCTS[key]?PRODUCTS[key].en:'';
+
+function waLink(phone,msg){ let d=(phone||'').replace(/\D/g,''); if(d.startsWith('0'))d='60'+d.slice(1); else if(!d.startsWith('60'))d='60'+d; return 'https://wa.me/'+d+(msg?('?text='+encodeURIComponent(msg)):''); }
+function waOrderMsg(o){ return `Hi ${o.name}, regarding your 焱品 Chill Tart order ${o.id} (${o.date}, ${o.time}) —`; }
+
+/* ====== DATA LOAD (Supabase live) ====== */
+function mapRow(r){
+  return { id:'#'+String(r.order_no).padStart(4,'0'), dbid:r.id, name:r.customer_name, phone:r.customer_phone,
+    senderName:r.sender_name||'', senderPhone:r.sender_phone||'',
+    items:(r.items||[]).map(i=>({key:i.key,size:i.size,qty:i.qty,price:i.price,note:i.note||'',fruit:i.fruit||i.variety||''})),
+    fulfil:r.fulfilment, address:r.address||'', area:r.area||r.address||'', date:r.deliver_date, time:r.deliver_time,
+    paid:!!r.paid, status:r.status||'new', invoice:r.invoice||null };
+}
+async function loadOrders(){
+  if(!sb){ ORDERS=[]; render(); return; }
+  const { data, error } = await sb.from('orders').select('*').order('order_no',{ascending:false});
+  if(error){ console.error(error); ORDERS=[]; render(); return; }
+  ORDERS=data.map(mapRow); render();
+  sb.channel('orders-live-m').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>loadOrders()).subscribe();
+}
+
+let curFilter='all', curMore='invoices';
+$('top-date').textContent=todayStr(0);
+
+$('tabbar').addEventListener('click',e=>{
+  const a=e.target.closest('a');if(!a)return;
+  document.querySelectorAll('.tabbar a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));$('p-'+a.dataset.tab).classList.add('on');
+  $('top-title').textContent={orders:'Orders 订单',production:'Production 制作',delivery:'Delivery 配送',more:'Overview 概览'}[a.dataset.tab];
+  $('scroll').scrollTop=0;
+  if(a.dataset.tab==='more') showMore(curMore);
+});
+$('chips').addEventListener('click',e=>{
+  const c=e.target.closest('.chip');if(!c)return;
+  document.querySelectorAll('#chips .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+  curFilter=c.dataset.f;renderOrders();
+});
+
+function render(){renderOrders();renderProduction();renderDelivery();renderMoreGlance();if($('p-more').classList.contains('on'))showMore(curMore);renderDot();}
+function renderDot(){const n=ORDERS.filter(o=>o.status==='new').length;$('dot-new').textContent=n;$('dot-new').style.display=n?'grid':'none';}
+
+/* ====== ORDERS ====== */
+function ocard(o){
+  const st=STATUS[o.status];
+  const items=o.items.map(i=>`${i.qty}× ${pname(i.key)} <span class="muted">${i.size}</span>${i.fruit?`<br><span class="fruit">🍓 ${i.fruit}</span>`:''}${i.note?`<br><span class="note">📝 ${i.note}</span>`:''}`).join('<br>');
+  const ful=o.fulfil==='pickup'?'<span class="badge b-pickup">🏬 Pickup</span>':'<span class="badge b-deliv">🚚 Delivery</span>';
+  const pay=o.paid?'<span class="badge b-paid">Paid</span>':'<span class="badge b-unpaid">Unpaid</span>';
+  let acts='';
+  if(isActive(o)){
+    if(!o.paid) acts+=`<button class="abtn pay" onclick="confirmPay('${o.id}')">✓ Confirm pay</button>`;
+    if(NEXT[o.status]) acts+=`<button class="abtn go" onclick="advance('${o.id}')">→ ${STATUS[NEXT[o.status]].en}</button>`;
+    acts+=`<button class="abtn ghost" onclick="openOrder('${o.id}')">⋯</button>`;
+  }
+  return `<div class="ocard">
+    <div class="oh"><div><div class="oid">${o.id}</div><div class="who">${o.name} · <a href="${waLink(o.phone,waOrderMsg(o))}" target="_blank" style="color:#1C9B5C;text-decoration:none;font-weight:600">💬 ${o.phone}</a></div></div><div class="amt">${money(orderTotal(o))}</div></div>
+    <div class="items">${items}</div>
+    <div class="meta">${ful}${pay}<span class="badge ${st.cls}">${st.en} ${st.zh}</span><span class="muted" style="font-size:11px;margin-left:auto">${o.date} · ${o.time}</span></div>
+    ${acts?`<div class="acts">${acts}</div>`:''}
+  </div>`;
+}
+function renderOrders(){
+  const active=ORDERS.filter(isActive);
+  const n=s=>active.filter(o=>o.status===s).length;
+  $('orders-glance').innerHTML=`
+    <div class="gstat accent"><small>New 新订单</small><b>${n('new')}</b></div>
+    <div class="gstat"><small>Preparing 制作</small><b>${n('preparing')}</b></div>
+    <div class="gstat"><small>Ready 待交付</small><b>${n('ready')}</b></div>
+    <div class="gstat"><small>Today 今日单</small><b>${active.filter(o=>o.date===todayStr(0)).length}</b></div>`;
+  const list=ORDERS.filter(o=>curFilter==='all'?true:o.status===curFilter);
+  $('orders-list').innerHTML=list.map(ocard).join('')||`<div class="empty"><div class="ico">📭</div>No orders yet.<br>New orders appear here automatically.</div>`;
+  renderDot();
+}
+
+/* ====== PRODUCTION ====== */
+function renderProduction(){
+  $('prod-date').textContent=todayStr(0);
+  const build=(d,el)=>{
+    const tally={};
+    ORDERS.filter(o=>o.date===d&&o.paid&&isActive(o)).forEach(o=>o.items.forEach(i=>{const k=pname(i.key);tally[k]=tally[k]||{n:0,s:{}};tally[k].n+=i.qty;tally[k].s[i.size]=(tally[k].s[i.size]||0)+i.qty;}));
+    el.innerHTML=Object.entries(tally).map(([name,d])=>`<div class="pcard"><div class="pn"><b>${name}</b><small>${Object.entries(d.s).map(([s,q])=>s+' ×'+q).join(' · ')}</small></div><div class="pc">${d.n}</div></div>`).join('')||`<div class="empty" style="padding:14px"><span class="muted">No confirmed orders.</span></div>`;
+  };
+  build(todayStr(0),$('prod-today'));build(todayStr(1),$('prod-tomorrow'));
+}
+
+/* ====== DELIVERY ====== */
+function renderDelivery(){
+  const ord={};[todayStr(0),todayStr(1),todayStr(2)].forEach((d,i)=>ord[d]=i);
+  const list=ORDERS.filter(isActive).slice().sort((a,b)=>(ord[a.date]??9)-(ord[b.date]??9));
+  $('delivery-list').innerHTML=list.map(o=>{
+    const st=STATUS[o.status];const t=o.fulfil==='pickup'?'🏬':'🚚';
+    return `<div class="lrow tap" onclick="openOrder('${o.id}')"><div class="ln"><b>${t} ${o.id}</b><small>${o.name} · ${o.area||''}</small></div><div class="rt"><b>${o.date}</b><br><span class="muted">${o.time}</span><br><span class="badge ${st.cls}" style="margin-top:3px;display:inline-block">${st.en}</span></div></div>`;
+  }).join('')||`<div class="empty"><div class="ico">🚚</div>No upcoming deliveries or pickups.</div>`;
+}
+
+/* ====== MORE ====== */
+function renderMoreGlance(){
+  const active=ORDERS.filter(isActive);
+  const outstanding=active.filter(o=>!o.paid).reduce((s,o)=>s+orderTotal(o),0);
+  const collected=active.filter(o=>o.paid).reduce((s,o)=>s+orderTotal(o),0);
+  $('more-glance').innerHTML=`
+    <div class="gstat accent"><small>Outstanding 待收</small><b>${money(outstanding)}</b></div>
+    <div class="gstat"><small>Collected 已收</small><b>${money(collected)}</b></div>`;
+}
+function showMore(which){
+  curMore=which;
+  const host=$('more-content'); const active=ORDERS.filter(isActive);
+  if(which==='invoices'){
+    const rows=active.map(o=>`<div class="lrow tap" onclick="openInvoice('${o.id}')"><div class="ln"><b>INV-${o.id.replace('#','')}</b><small>${o.name} · ${o.date}</small></div><div class="rt"><b>${money(orderTotal(o))}</b><br>${o.paid?'<span class="badge b-paid">Paid</span>':'<span class="badge b-unpaid">Unpaid</span>'}</div></div>`).join('');
+    host.innerHTML=`<div class="sec-title">Invoices 账单</div>${rows||'<div class="empty"><div class="ico">🧾</div>No invoices yet.</div>'}`;
+  } else if(which==='catalogue'){
+    const sold={}; active.forEach(o=>o.items.forEach(i=>{sold[i.key]=(sold[i.key]||0)+i.qty;}));
+    const cards=CATALOGUE.map(p=>`<div class="cat-card"><div class="cat-emoji">${p.emoji}</div><div class="cat-info"><div class="cat-name">${p.zh}</div><div class="cat-desc">${p.en} · ${sold[p.key]||0} sold</div><div class="cat-sizes">${p.sizes.map(s=>`<span class="cat-size">${s.zh} <b>${money(s.price)}</b></span>`).join('')}</div><div class="cat-fruit">🍓 ${p.fruitNote}</div></div></div>`).join('');
+    host.innerHTML=`<div class="sec-title">Products 产品</div>${cards}<div class="sec-title">Available fruits 水果</div><div>${FRUITS_LIST.map(f=>`<span class="fruit-pill">${f}</span>`).join('')}</div>`;
+  } else if(which==='customers'){
+    const map={};active.forEach(o=>{map[o.phone]=map[o.phone]||{name:o.name,phone:o.phone,orders:0,spent:0,last:o.date};map[o.phone].orders++;map[o.phone].spent+=orderTotal(o);});
+    const list=Object.values(map).sort((a,b)=>b.spent-a.spent);
+    const rows=list.map(c=>`<div class="lrow tap" onclick="openCustomer('${c.phone.replace(/'/g,'')}')"><div class="ln"><b>${c.name}</b><small>${c.orders} order(s) · ${c.last}</small></div><div class="rt"><b style="color:var(--orange)">${money(c.spent)}</b><br>${c.orders>1?'<span class="badge b-done">Repeat</span>':'<span class="badge b-new">New</span>'}</div></div>`).join('');
+    host.innerHTML=`<div class="sec-title">Customers 顾客</div>${rows||'<div class="empty"><div class="ico">👥</div>No customers yet.</div>'}`;
+  } else if(which==='sales'){
+    const paid=active.filter(o=>o.paid); const collected=paid.reduce((s,o)=>s+orderTotal(o),0);
+    const tally={};active.forEach(o=>o.items.forEach(i=>{tally[i.key]=tally[i.key]||{u:0,r:0};tally[i.key].u+=i.qty;tally[i.key].r+=i.qty*i.price;}));
+    const best=Object.entries(tally).sort((a,b)=>b[1].r-a[1].r).map(([k,t])=>`<div class="lrow"><div class="ln"><b>${pname(k)}</b><small>${t.u} sold</small></div><b style="color:var(--orange)">${money(t.r)}</b></div>`).join('');
+    host.innerHTML=`<div class="sec-title">Sales 营业额</div>
+      <div class="glance"><div class="gstat"><small>Collected</small><b>${money(collected)}</b></div><div class="gstat"><small>Paid orders</small><b>${paid.length}</b></div></div>
+      <div class="sec-title">Best sellers</div>${best||'<div class="empty">No sales yet.</div>'}`;
+  }
+}
+
+/* ====== ACTIONS ====== */
+async function saveOrder(o,patch){ Object.assign(o,patch); render(); if(sb&&o.dbid){const{error}=await sb.from('orders').update(patch).eq('id',o.dbid); if(error){console.error(error);toast('⚠ Save failed');}} }
+function confirmPay(id){const o=find(id);if(!o)return;const patch={paid:true};if(o.status==='new')patch.status='preparing';saveOrder(o,patch);toast(`${id} paid ✓`);}
+function advance(id){const o=find(id);if(!o||!NEXT[o.status])return;saveOrder(o,{status:NEXT[o.status]});toast(`${id} → ${STATUS[NEXT[o.status]].en}`);}
+function cancelOrder(id){const o=find(id);if(!o)return;if(confirm(`Cancel ${id}?`)){saveOrder(o,{status:'cancelled'});closeSheet();toast(`${id} cancelled`);}}
+function setStatus(id,s){const o=find(id);if(!o)return;saveOrder(o,{status:s});openOrder(id);}
+
+/* ====== SHEETS (detail / customer / invoice) ====== */
+function openSheet(html){ $('sheet').innerHTML=html; $('sheet-bg').classList.add('on'); $('sheet').scrollTop=0; }
+function closeSheet(){ $('sheet-bg').classList.remove('on'); invEditId=null; }
+
+function openOrder(id){
+  const o=find(id);if(!o)return;
+  const items=o.items.map(i=>`<div class="srow"><span>${i.qty}× ${pname(i.key)}<br><span class="muted">${penname(i.key)} · ${i.size}</span>${i.fruit?`<br><span style="color:var(--orange-deep)">🍓 ${i.fruit}</span>`:''}${i.note?`<br><span style="color:var(--orange-deep);font-style:italic">📝 ${i.note}</span>`:''}</span><b>${money(i.price*i.qty)}</b></div>`).join('');
+  const st=STATUS[o.status];
+  const sender=(o.senderName||o.senderPhone)&&(o.senderName!==o.name||o.senderPhone!==o.phone)?`<div class="srow"><span>Sender 寄件人</span><b>${o.senderName||'—'}${o.senderPhone?'<br>'+o.senderPhone:''}</b></div>`:'';
+  openSheet(`
+    <div class="sheet-h"><h3>${o.id} · ${o.name}</h3><button class="x" onclick="closeSheet()">×</button></div>
+    <div class="sheet-b">
+      <div class="srow"><span>Status 状态</span><b><span class="badge ${st.cls}">${st.en} ${st.zh}</span></b></div>
+      <div class="srow"><span>Payment 付款</span><b>${o.paid?'<span class="badge b-paid">Paid</span>':'<span class="badge b-unpaid">Unpaid</span>'}</b></div>
+      <div class="srow"><span>Fulfilment</span><b>${o.fulfil==='pickup'?'🏬 Self-pickup':'🚚 Delivery'}</b></div>
+      <div class="srow"><span>${o.fulfil==='pickup'?'Pickup':'Deliver'} 时间</span><b>${o.date} · ${o.time}</b></div>
+      ${o.fulfil==='delivery'&&o.address?`<div class="srow"><span>Address 地址</span><b>${o.address}</b></div>`:''}
+      <div class="srow"><span>Recipient 收件人</span><b>${o.name}<br><a href="${waLink(o.phone,waOrderMsg(o))}" target="_blank" style="color:#1C9B5C;text-decoration:none">💬 ${o.phone}</a></b></div>
+      ${sender}
+      <div class="sec-title">Items 商品</div>${items}
+      <div class="srow" style="font-size:15px"><span><b>Total 总计</b></span><b style="color:var(--orange)">${money(orderTotal(o))}</b></div>
+      <div class="sec-title">Update status 更新状态</div>
+      <div class="seg">${['new','preparing','ready','done'].map(s=>`<button class="${o.status===s?'on':''}" onclick="setStatus('${o.id}','${s}')">${STATUS[s].en}</button>`).join('')}</div>
+    </div>
+    <div class="sheet-f">
+      ${!o.paid?`<button class="abtn pay" onclick="confirmPay('${o.id}');closeSheet()">✓ Confirm payment</button>`:''}
+      <button class="abtn go" onclick="openInvoice('${o.id}')">🧾 Invoice</button>
+      <button class="abtn ghost" style="color:#D6422F" onclick="cancelOrder('${o.id}')">Cancel</button>
+    </div>`);
+}
+
+function openCustomer(phone){
+  const orders=ORDERS.filter(o=>o.phone===phone&&isActive(o)).sort((a,b)=>b.id.localeCompare(a.id));
+  if(!orders.length)return;
+  const c={name:orders[0].name,phone,orders:orders.length,spent:orders.reduce((s,o)=>s+orderTotal(o),0)};
+  const list=orders.map(o=>`<div class="srow tap" onclick="openOrder('${o.id}')"><span>${o.id} · ${o.date}<br><span class="muted">${o.items.map(i=>i.qty+'× '+pname(i.key)).join(', ')}</span></span><b>${money(orderTotal(o))}<br><span class="badge ${STATUS[o.status].cls}" style="font-size:10px">${STATUS[o.status].en}</span></b></div>`).join('');
+  openSheet(`
+    <div class="sheet-h"><h3>${c.name}</h3><button class="x" onclick="closeSheet()">×</button></div>
+    <div class="sheet-b">
+      <div class="srow"><span>Phone 电话</span><b><a href="${waLink(c.phone,`Hi ${c.name}, this is 焱品 Chill Tart 🧡`)}" target="_blank" style="color:#1C9B5C;text-decoration:none">💬 ${c.phone}</a></b></div>
+      <div class="srow"><span>Total orders</span><b>${c.orders}</b></div>
+      <div class="srow"><span>Total spent</span><b style="color:var(--orange)">${money(c.spent)}</b></div>
+      <div class="sec-title">Order history (tap to open)</div>${list}
+    </div>`);
+}
+
+/* ====== INVOICES ====== */
+const invNo=o=>'INV-'+o.id.replace('#','');
+function invLines(o){ if(o.invoice&&Array.isArray(o.invoice.lines)&&o.invoice.lines.length)return o.invoice.lines.map(l=>({...l})); return o.items.map(i=>({desc:`${pname(i.key)} ${i.size}${i.fruit?' · '+i.fruit:''}${i.note?' ('+i.note+')':''}`,qty:i.qty,price:i.price})); }
+function invDiscount(o){return(o.invoice&&+o.invoice.discount)||0;}
+function invNote(o){return(o.invoice&&o.invoice.note)||'';}
+let invEditId=null;
+function ensureInv(){const o=find(invEditId);if(!o.invoice)o.invoice={lines:invLines(o),discount:invDiscount(o),note:invNote(o)};return o;}
+
+function openInvoice(id){
+  const o=find(id);if(!o)return;invEditId=id;
+  const lines=invLines(o),discount=invDiscount(o),note=invNote(o);
+  const sub=lines.reduce((s,l)=>s+(+l.qty||0)*(+l.price||0),0);
+  const linesHtml=lines.map((l,idx)=>`<div class="inv-line">
+    <input class="inv-in" style="flex:1" value="${(l.desc||'').replace(/"/g,'&quot;')}" oninput="invEdit(${idx},'desc',this.value)">
+    <input class="inv-in" style="width:42px;text-align:center" type="number" min="0" value="${l.qty}" oninput="invEdit(${idx},'qty',this.value)">
+    <input class="inv-in" style="width:66px;text-align:right" type="number" min="0" step="0.01" value="${(+l.price).toFixed(2)}" oninput="invEdit(${idx},'price',this.value)">
+    <button class="inv-del" onclick="invDelLine(${idx})">×</button></div>`).join('');
+  openSheet(`
+    <div class="sheet-h"><h3>${invNo(o)}</h3><button class="x" onclick="closeSheet()">×</button></div>
+    <div class="sheet-b">
+      <div class="inv-co">
+        <div><b>${COMPANY.name}</b><div class="muted">${COMPANY.cnName}</div><div class="muted">Reg. ${COMPANY.regId}</div><div class="muted">${COMPANY.phone}</div></div>
+        <div style="text-align:right"><div class="muted">Invoice</div><b>${invNo(o)}</b><div class="muted">Order ${o.id}</div><div class="muted">${o.date}</div></div>
+      </div>
+      <div class="inv-billto"><span class="muted">Bill to 客户</span><b>${o.name}</b><div class="muted">📱 ${o.phone} (WhatsApp)</div>${o.fulfil==='delivery'&&o.address?`<div class="muted">${o.address}</div>`:`<div class="muted">Self-pickup · ${o.area}</div>`}<div class="muted">${o.fulfil==='pickup'?'Pickup':'Delivery'}: ${o.date} · ${o.time}</div></div>
+      <div style="display:flex;gap:6px;font-size:10px;color:var(--soft);text-transform:uppercase;letter-spacing:.4px;padding:0 2px 6px"><span style="flex:1">Description</span><span style="width:42px;text-align:center">Qty</span><span style="width:66px;text-align:right">Price</span><span style="width:18px"></span></div>
+      <div id="inv-lines">${linesHtml}</div>
+      <button class="chip" style="margin-top:4px" onclick="invAddLine()">+ Add line</button>
+      <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px">
+        <div class="inv-tot-row"><span>Subtotal 小计</span><b id="inv-sub2">${money(sub)}</b></div>
+        <div class="inv-tot-row"><span>Discount 折扣 RM</span><input class="inv-in" id="inv-disc" style="width:80px;text-align:right" type="number" min="0" step="0.01" value="${discount.toFixed(2)}" oninput="invSetDiscount(this.value)"></div>
+        <div class="inv-tot-row grand"><span>Total 总计</span><b id="inv-grand" style="color:var(--orange)">${money(sub-discount)}</b></div>
+      </div>
+      <div style="margin-top:10px"><span class="muted" style="font-size:12px">Note 备注</span><textarea class="inv-in" id="inv-note" style="width:100%;height:44px;margin-top:4px" oninput="invSetNote(this.value)" placeholder="e.g. Thank you! OCBC 716-124227-5">${note.replace(/</g,'&lt;')}</textarea></div>
+      <div class="muted" style="margin-top:8px;font-size:11.5px">Payment: ${COMPANY.bank} · ${o.paid?'<span class="badge b-paid">Paid</span>':'<span class="badge b-unpaid">Unpaid</span>'}</div>
+    </div>
+    <div class="sheet-f">
+      <button class="abtn ghost" onclick="saveInvoice()">💾</button>
+      <button class="abtn go" onclick="downloadInvoicePDF('${o.id}')">⬇ PDF</button>
+      <button class="abtn wa" onclick="shareInvoiceWhatsApp('${o.id}')">💬 Send</button>
+    </div>`);
+}
+function invEdit(idx,field,val){const o=ensureInv();o.invoice.lines[idx][field]=(field==='desc')?val:(+val||0);recalcInvoiceUI();}
+function invAddLine(){const o=ensureInv();o.invoice.lines.push({desc:'',qty:1,price:0});openInvoice(invEditId);}
+function invDelLine(idx){const o=ensureInv();o.invoice.lines.splice(idx,1);openInvoice(invEditId);}
+function invSetDiscount(v){const o=ensureInv();o.invoice.discount=+v||0;recalcInvoiceUI();}
+function invSetNote(v){const o=ensureInv();o.invoice.note=v;}
+function recalcInvoiceUI(){const o=find(invEditId);const lines=o.invoice.lines,disc=+o.invoice.discount||0;const sub=lines.reduce((s,l)=>s+(+l.qty||0)*(+l.price||0),0);const a=$('inv-sub2'),b=$('inv-grand');if(a)a.textContent=money(sub);if(b)b.textContent=money(sub-disc);}
+async function saveInvoice(){const o=find(invEditId);if(!o)return;ensureInv();if(sb&&o.dbid){const{error}=await sb.from('orders').update({invoice:o.invoice}).eq('id',o.dbid);if(error){console.error(error);toast('⚠ Save failed');return;}}toast('Invoice saved ✓');}
+
+function invoiceData(o){const lines=invLines(o),discount=invDiscount(o);const sub=lines.reduce((s,l)=>s+(+l.qty||0)*(+l.price||0),0);return{lines,discount,sub,total:sub-discount,note:invNote(o)};}
+function downloadInvoicePDF(id){
+  const o=find(id);if(!o)return;const{lines,discount,sub,total,note}=invoiceData(o);
+  const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});
+  const L=18,R=192;let y=20;
+  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text(COMPANY.name,L,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120);
+  y+=6;doc.text(`Reg. ${COMPANY.regId}`,L,y);y+=4.5;doc.text(COMPANY.area,L,y);y+=4.5;doc.text(`${COMPANY.phone}  ·  IG ${COMPANY.ig}`,L,y);
+  doc.setTextColor(30);doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('INVOICE',R,20,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120);
+  doc.text(invNo(o),R,26,{align:'right'});doc.text(`Order ${o.id}`,R,30.5,{align:'right'});doc.text(`Date: ${o.date}`,R,35,{align:'right'});
+  y=46;doc.setDrawColor(230);doc.line(L,y,R,y);
+  y+=7;doc.setTextColor(120);doc.text('BILL TO',L,y);
+  y+=5;doc.setTextColor(30);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(o.name,L,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120);
+  y+=4.5;doc.text(`${o.phone} (WhatsApp)`,L,y);
+  if(o.fulfil==='delivery'&&o.address){y+=4.5;doc.text(doc.splitTextToSize('Deliver: '+o.address,120),L,y);}else{y+=4.5;doc.text(`Self-pickup · ${o.area}`,L,y);}
+  y+=4.5;doc.text(`${o.fulfil==='pickup'?'Pickup':'Delivery'}: ${o.date} · ${o.time}`,L,y);
+  y+=9;doc.setFillColor(255,233,214);doc.rect(L,y-5,R-L,8,'F');
+  doc.setTextColor(60);doc.setFont('helvetica','bold');doc.setFontSize(9);
+  doc.text('DESCRIPTION',L+2,y);doc.text('QTY',130,y,{align:'right'});doc.text('PRICE',158,y,{align:'right'});doc.text('AMOUNT',R-2,y,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setTextColor(40);y+=3;
+  lines.forEach(l=>{y+=7;const w=doc.splitTextToSize(l.desc||'',100);doc.text(w,L+2,y);doc.text(String(l.qty),130,y,{align:'right'});doc.text((+l.price).toFixed(2),158,y,{align:'right'});doc.text(((+l.qty||0)*(+l.price||0)).toFixed(2),R-2,y,{align:'right'});if(w.length>1)y+=(w.length-1)*4.5;});
+  y+=4;doc.setDrawColor(230);doc.line(120,y,R,y);
+  y+=6;doc.setTextColor(90);doc.text('Subtotal',158,y,{align:'right'});doc.setTextColor(40);doc.text('RM '+sub.toFixed(2),R-2,y,{align:'right'});
+  if(discount){y+=5.5;doc.setTextColor(90);doc.text('Discount',158,y,{align:'right'});doc.setTextColor(40);doc.text('- RM '+discount.toFixed(2),R-2,y,{align:'right'});}
+  y+=6.5;doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(232,101,10);doc.text('TOTAL',158,y,{align:'right'});doc.text('RM '+total.toFixed(2),R-2,y,{align:'right'});
+  y+=12;doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90);doc.text(`Payment: ${COMPANY.bank}`,L,y);y+=5;doc.text(`Status: ${o.paid?'PAID':'UNPAID'}`,L,y);
+  if(note){y+=8;doc.setTextColor(120);doc.text(doc.splitTextToSize('Note: '+note,R-L),L,y);}
+  y+=14;doc.setTextColor(150);doc.setFontSize(8);doc.text('用甜点，把爱说出来 · Thank you for ordering from Chill Tart!',L,y);
+  doc.save(`${invNo(o)}.pdf`);toast('PDF downloaded ✓');
+}
+function shareInvoiceWhatsApp(id){
+  const o=find(id);if(!o)return;const{lines,discount,total,note}=invoiceData(o);
+  let msg=`*${COMPANY.name}*\nReg. ${COMPANY.regId}\n\n*Invoice ${invNo(o)}* (Order ${o.id})\nDate: ${o.date}\n\nHi ${o.name}, here is your invoice:\n`;
+  lines.forEach(l=>{msg+=`\n• ${l.desc}\n   ${l.qty} × RM ${(+l.price).toFixed(2)} = RM ${((+l.qty||0)*(+l.price||0)).toFixed(2)}`;});
+  if(discount)msg+=`\n\nDiscount: - RM ${discount.toFixed(2)}`;
+  msg+=`\n\n*Total: RM ${total.toFixed(2)}*\n\n${o.fulfil==='pickup'?'Pickup':'Delivery'}: ${o.date} · ${o.time}\nPayment: ${COMPANY.bank}`;
+  if(note)msg+=`\n\n${note}`;
+  msg+=`\n\n用甜点，把爱说出来 💛`;
+  window.open(waLink(o.phone,msg),'_blank');
+}
+
+let toastT;
+function toast(msg){const t=$('toast');t.textContent=msg;t.style.opacity='1';clearTimeout(toastT);toastT=setTimeout(()=>t.style.opacity='0',1700);}
+
+/* ====== LOGIN GATE ====== */
+const APP_PASSWORD = 'chilltart';
+let booted=false;
+function bootApp(){ if(booted)return; booted=true; document.getElementById('login-gate').style.display='none'; loadOrders(); }
+function tryLogin(){
+  const pw=document.getElementById('login-pw').value;
+  if(pw===APP_PASSWORD){
+    try{ sessionStorage.setItem('ct_auth','1'); }catch(e){}
+    bootApp();
+  } else {
+    const err=document.getElementById('login-err'); err.textContent='密码错误 · Wrong password';
+    const inp=document.getElementById('login-pw'); inp.value=''; inp.focus();
+  }
+}
+function logout(){ try{ sessionStorage.removeItem('ct_auth'); }catch(e){} location.reload(); }
+try{ if(sessionStorage.getItem('ct_auth')==='1') bootApp(); else document.getElementById('login-pw').focus(); }catch(e){ document.getElementById('login-pw').focus(); }
+</script>
+</body>
+</html>
